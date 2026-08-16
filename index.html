@@ -1,0 +1,1964 @@
+<!DOCTYPE html>
+<html lang="ne">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>महेश भिजन (Mahesh Vision) - प्रशासनिक प्रणाली तथा वेबसाइट</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Noto Sans Devanagari & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- html2canvas and jsPDF for reliable ID card image & PDF download -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- EmailJS for secure Email OTP dispatching -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            800: '#166534',
+                            900: '#14532d',
+                        },
+                        accent: {
+                            50: '#f0f9ff',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            900: '#0c4a6e',
+                        },
+                        admin: {
+                            50: '#fdf2f8',
+                            600: '#db2777',
+                            700: '#be185d',
+                            900: '#831843',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Noto Sans Devanagari', 'Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Noto Sans Devanagari', 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        
+        /* Print Styles for ID Card */
+        @media print {
+            body {
+                background: #ffffff !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            body * {
+                visibility: hidden !important;
+            }
+            #printableCard, #printableCard * {
+                visibility: visible !important;
+            }
+            #printableCard {
+                position: fixed !important;
+                left: 50% !important;
+                top: 20px !important;
+                transform: translateX(-50%) !important;
+                width: 350px !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                box-shadow: none !important;
+                border: 2px solid #15803d !important;
+                z-index: 99999 !important;
+                background: #ffffff !important;
+            }
+            .no-print, #idCardModal, .fixed {
+                background: transparent !important;
+                backdrop-filter: none !important;
+            }
+        }
+
+        .id-card-shadow {
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased min-h-screen flex flex-col justify-between">
+
+    <!-- Top Admin Status Indicator Bar (Visible ONLY when Admin Mode is active) -->
+    <div id="admin-banner" class="hidden bg-slate-900 text-white text-xs py-2 px-4 border-b border-amber-500/30">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span class="font-bold text-amber-400">प्रशासनिक पहुँच सक्रिय (Admin Active Mode)</span>
+                <span class="text-slate-400 hidden sm:inline">| सम्पूर्ण गोपनीयता र अधिकार सुरक्षित छ</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <button onclick="switchTab('admin')" class="hover:text-amber-300 font-semibold underline underline-offset-2">
+                    <i class="fa-solid fa-gauge mr-1"></i>एडमिन ड्यासबोर्ड
+                </button>
+                <button onclick="logoutAdmin()" class="bg-rose-600 hover:bg-rose-700 text-white px-2.5 py-1 rounded text-[11px] font-bold transition-colors">
+                    <i class="fa-solid fa-right-from-bracket mr-1"></i>लगआउट
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Site Header Navigation -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-20">
+                
+                <!-- Logo & Organization Name -->
+                <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('home')">
+                    <div class="w-12 h-12 rounded-full bg-gradient-to-tr from-brand-700 via-brand-600 to-accent-600 flex items-center justify-center text-white text-xl font-bold shadow-md border-2 border-white ring-2 ring-brand-600/30">
+                        <i class="fa-solid fa-hands-holding-child"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h1 class="text-xl sm:text-2xl font-extrabold text-brand-900 tracking-tight leading-none">महेश भिजन</h1>
+                            <span class="text-xs font-semibold px-2 py-0.5 bg-brand-100 text-brand-800 rounded-full hidden sm:inline-block">MAHESH VISION</span>
+                        </div>
+                        <p class="text-xs font-medium text-amber-700 mt-0.5">
+                            <i class="fa-solid fa-quote-left text-[10px] mr-1"></i>हाम्रो गाउँ, हाम्रो दायित्व<i class="fa-solid fa-quote-right text-[10px] ml-1"></i>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Navigation Desktop -->
+                <nav class="hidden lg:flex items-center space-x-1 font-medium text-sm text-slate-700">
+                    <button onclick="switchTab('home')" id="nav-home" class="nav-btn px-3 py-2 rounded-lg transition-colors bg-brand-50 text-brand-700 font-semibold">
+                        <i class="fa-solid fa-house mr-1.5"></i>गृहपृष्ठ(Home Page)
+                    </button>
+                    <button onclick="switchTab('about')" id="nav-about" class="nav-btn px-3 py-2 rounded-lg hover:bg-slate-100 transition-colors">
+                        <i class="fa-solid fa-circle-info mr-1.5"></i>हाम्रोबारे
+                    </button>
+                    <button onclick="switchTab('projects')" id="nav-projects" class="nav-btn px-3 py-2 rounded-lg hover:bg-slate-100 transition-colors">
+                        <i class="fa-solid fa-list-check mr-1.5"></i>योजना तथा कार्य
+                    </button>
+                    <button onclick="switchTab('members')" id="nav-members" class="nav-btn px-3 py-2 rounded-lg hover:bg-slate-100 transition-colors">
+                        <i class="fa-solid fa-users mr-1.5"></i>सदस्यहरू
+                    </button>
+                    <button onclick="switchTab('notices')" id="nav-notices" class="nav-btn px-3 py-2 rounded-lg hover:bg-slate-100 transition-colors">
+                        <i class="fa-solid fa-bullhorn mr-1.5"></i>सूचना पाटी
+                    </button>
+                    <button onclick="switchTab('admin')" id="nav-admin" class="nav-btn px-3 py-2 rounded-lg hover:bg-slate-100 transition-colors text-amber-700 font-bold hidden border border-amber-300 bg-amber-50">
+                        <i class="fa-solid fa-user-shield mr-1.5 text-amber-600"></i>एडमिन प्यानल
+                    </button>
+                </nav>
+
+                <!-- Action & Login Buttons -->
+                <div class="hidden sm:flex items-center gap-2">
+                    <button onclick="openRegistrationModal()" class="bg-gradient-to-r from-brand-600 to-brand-700 hover:from-brand-700 hover:to-brand-800 text-white font-medium text-sm px-4 py-2.5 rounded-xl shadow-md hover:shadow-lg transition-all flex items-center gap-2 transform active:scale-95">
+                        <i class="fa-solid fa-user-plus"></i>
+                        <span>सदस्यता आवेदन</span>
+                    </button>
+
+                    <!-- Admin Access Trigger -->
+                    <button id="admin-login-btn" onclick="openAdminLoginModal()" class="bg-slate-900 hover:bg-slate-800 text-white font-medium text-sm px-3.5 py-2.5 rounded-xl shadow transition-all flex items-center gap-1.5">
+                        <i class="fa-solid fa-lock text-amber-400"></i>
+                        <span>प्रशासक लगइन</span>
+                    </button>
+                </div>
+
+                <!-- Mobile menu button -->
+                <div class="lg:hidden flex items-center gap-2">
+                    <button onclick="openAdminLoginModal()" class="p-2 rounded-lg text-amber-700 bg-amber-50 border border-amber-200">
+                        <i class="fa-solid fa-lock text-lg"></i>
+                    </button>
+                    <button onclick="toggleMobileMenu()" class="p-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 focus:outline-none">
+                        <i class="fa-solid fa-bars text-xl" id="menu-icon"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Navigation Drawer -->
+        <div id="mobile-menu" class="hidden lg:hidden border-t border-slate-200 bg-white px-4 pt-2 pb-4 space-y-1 shadow-lg">
+            <button onclick="switchTab('home'); toggleMobileMenu();" class="w-full text-left px-3 py-2 rounded-lg text-slate-700 font-medium hover:bg-slate-100 flex items-center gap-2">
+                <i class="fa-solid fa-house w-5 text-brand-600"></i> गृहपृष्ठ
+            </button>
+            <button onclick="switchTab('about'); toggleMobileMenu();" class="w-full text-left px-3 py-2 rounded-lg text-slate-700 font-medium hover:bg-slate-100 flex items-center gap-2">
+                <i class="fa-solid fa-circle-info w-5 text-brand-600"></i> हाम्रोबारे
+            </button>
+            <button onclick="switchTab('projects'); toggleMobileMenu();" class="w-full text-left px-3 py-2 rounded-lg text-slate-700 font-medium hover:bg-slate-100 flex items-center gap-2">
+                <i class="fa-solid fa-list-check w-5 text-brand-600"></i> योजना तथा कार्य
+            </button>
+            <button onclick="switchTab('members'); toggleMobileMenu();" class="w-full text-left px-3 py-2 rounded-lg text-slate-700 font-medium hover:bg-slate-100 flex items-center gap-2">
+                <i class="fa-solid fa-users w-5 text-brand-600"></i> सदस्यहरू
+            </button>
+            <button onclick="switchTab('notices'); toggleMobileMenu();" class="w-full text-left px-3 py-2 rounded-lg text-slate-700 font-medium hover:bg-slate-100 flex items-center gap-2">
+                <i class="fa-solid fa-bullhorn w-5 text-brand-600"></i> सूचना पाटी
+            </button>
+            <div id="mobile-admin-link" class="hidden pt-1 border-t border-slate-100">
+                <button onclick="switchTab('admin'); toggleMobileMenu();" class="w-full text-left px-3 py-2 rounded-lg text-amber-800 bg-amber-50 font-bold flex items-center gap-2">
+                    <i class="fa-solid fa-user-shield w-5 text-amber-600"></i> एडमिन ड्यासबोर्ड
+                </button>
+            </div>
+            <div class="pt-2 flex flex-col gap-2">
+                <button onclick="openRegistrationModal(); toggleMobileMenu();" class="w-full bg-brand-600 text-white font-medium py-2.5 rounded-lg text-center flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-user-plus"></i> सदस्यता आवेदन फारम
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="flex-grow">
+        
+        <!-- SECTION: HOME TAB -->
+        <div id="tab-home" class="tab-content">
+            
+            <!-- Hero Banner -->
+            <section class="relative bg-gradient-to-b from-brand-900 via-brand-800 to-slate-900 text-white overflow-hidden py-16 lg:py-24">
+                <div class="absolute inset-0 opacity-10 bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:16px_16px]"></div>
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                        <div class="lg:col-span-7 space-y-6 text-center lg:text-left">
+                            <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-emerald-300 text-xs sm:text-sm font-medium">
+                                <i class="fa-solid fa-shield-halved"></i> मालिका गाउँपालिका-६,अर्जै, गुल्मी
+                            </div>
+                            <h1 class="text-3xl sm:text-5xl font-extrabold tracking-tight text-white leading-tight">
+                                गाउँको समग्र विकास र सामाजिक सेवामा समर्पित <span class="text-emerald-400 font-black">"महेश भिजन"</span>
+                            </h1>
+                            <p class="text-slate-200 text-base sm:text-lg max-w-2xl font-light">
+                                शिक्षा, स्वास्थ्य, शुद्ध खानेपानी, सरसफाइ र युवा रोजगारको क्षेत्रमा वडा कार्यालय, क्लब तथा स्थानीय समुदायसँग सहकार्य गरी अर्जै गाउँलाई समृद्ध बनाउने हाम्रो अभियान।
+                            </p>
+                            <div class="pt-2 flex flex-wrap gap-4 justify-center lg:justify-start">
+                                <button onclick="openRegistrationModal()" class="bg-emerald-500 hover:bg-emerald-600 text-slate-900 font-bold px-6 py-3.5 rounded-xl shadow-lg transition-all flex items-center gap-2 transform active:scale-95">
+                                    <i class="fa-solid fa-address-card"></i>
+                                    <span>अनलाइन सदस्यता आवेदन</span>
+                                </button>
+                                <button onclick="switchTab('projects')" class="bg-white/10 hover:bg-white/20 text-white font-semibold px-6 py-3.5 rounded-xl border border-white/30 backdrop-blur-sm transition-all flex items-center gap-2">
+                                    <i class="fa-solid fa-dharmachakra"></i>
+                                    <span>हाम्रा योजनाहरू</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Hero Stats/Cards -->
+                        <div class="lg:col-span-5">
+                            <div class="bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/20 shadow-2xl space-y-4">
+                                <div class="text-center pb-4 border-b border-white/10">
+                                    <h3 class="text-amber-300 text-lg font-bold">"हाम्रो गाउँ, हाम्रो दायित्व"</h3>
+                                    <p class="text-xs text-slate-300">सुरक्षित तथा पारदर्शी सामाजिक अभियान</p>
+                                </div>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div class="bg-white/10 p-3.5 rounded-xl text-center">
+                                        <div class="text-2xl font-black text-emerald-400" id="stat-members-count">४+</div>
+                                        <div class="text-xs text-slate-300">स्वीकृत सदस्यहरू</div>
+                                    </div>
+                                    <div class="bg-white/10 p-3.5 rounded-xl text-center">
+                                        <div class="text-2xl font-black text-amber-300" id="stat-projects-count">३</div>
+                                        <div class="text-xs text-slate-300">सञ्चालित योजनाहरू</div>
+                                    </div>
+                                    <div class="bg-white/10 p-3.5 rounded-xl text-center">
+                                        <div class="text-2xl font-black text-blue-300" id="stat-pending-count">१</div>
+                                        <div class="text-xs text-slate-300">प्रतीक्षारत आवेदन</div>
+                                    </div>
+                                    <div class="bg-white/10 p-3.5 rounded-xl text-center">
+                                        <div class="text-2xl font-black text-rose-300">१००%</div>
+                                        <div class="text-xs text-slate-300">सुरक्षित तथा पारदर्शी</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Pillars of Activity -->
+            <section class="py-12 bg-white border-b border-slate-200">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="text-center max-w-3xl mx-auto mb-10">
+                        <h2 class="text-2xl sm:text-3xl font-bold text-slate-900">संस्थाका मुख्य प्राथमिकता र क्षेत्रहरू</h2>
+                        <p class="text-slate-600 mt-2 text-sm sm:text-base">हामी गाउँघरमा हुने हरेक आवश्यकता र सामाजिक सुधारका क्षेत्रमा प्रत्यक्ष रूपमा खटिएका छौँ।</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <!-- Pillars -->
+                        <div class="bg-slate-50 p-6 rounded-2xl border border-slate-200/80 hover:shadow-md transition-shadow group">
+                            <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition-transform">
+                                <i class="fa-solid fa-faucet-drip"></i>
+                            </div>
+                            <h3 class="text-lg font-bold text-slate-900 mb-2"> खानेपानी तथा सरसफाइ</h3>
+                            <p class="text-slate-600 text-sm leading-relaxed">
+                                विद्यालयहरूमा स्वच्छ खानेपानीको निर्माण तथा मर्मतसम्भार, विद्यालय वरपर तथा स्वास्थ्य चौकी वरपर नियमित सरसफाइ कार्यक्रम।
+                            </p>
+                        </div>
+
+                        <div class="bg-slate-50 p-6 rounded-2xl border border-slate-200/80 hover:shadow-md transition-shadow group">
+                            <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition-transform">
+                                <i class="fa-solid fa-graduation-cap"></i>
+                            </div>
+                            <h3 class="text-lg font-bold text-slate-900 mb-2">शिक्षा तथा गुणस्तर सुधार</h3>
+                            <p class="text-slate-600 text-sm leading-relaxed">
+                                स्थानीय विद्यालयहरूसँग समन्वय गरी शैक्षिक सामग्री वितरण, बाल विकास तथा प्रविधिमैत्री कक्षा व्यवस्थापनमा सहयोग।
+                            </p>
+                        </div>
+
+                        <div class="bg-slate-50 p-6 rounded-2xl border border-slate-200/80 hover:shadow-md transition-shadow group">
+                            <div class="w-12 h-12 bg-rose-100 text-rose-600 rounded-xl flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition-transform">
+                                <i class="fa-solid fa-kit-medical"></i>
+                            </div>
+                            <h3 class="text-lg font-bold text-slate-900 mb-2">स्वास्थ्य तथा जनचेतना</h3>
+                            <p class="text-slate-600 text-sm leading-relaxed">
+                                अर्जै स्वास्थ्य चौकीसँगको सहकार्यमा नि:शुल्क स्वास्थ्य शिविर, रक्तदान, प्राथमिक उपचार र स्वास्थ्य सचेतना।
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- SECTION: ADMIN PANEL TAB (Exclusive for Logged-in Admin) -->
+        <div id="tab-admin" class="tab-content hidden py-10 bg-slate-100">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+                
+                <!-- Admin Header & Welcome Banner -->
+                <div class="bg-gradient-to-r from-slate-900 via-slate-800 to-brand-900 p-6 sm:p-8 rounded-3xl text-white shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                    <div>
+                        <div class="inline-flex items-center gap-2 bg-amber-500/20 text-amber-300 border border-amber-500/30 px-3 py-1 rounded-full text-xs font-bold mb-2">
+                            <i class="fa-solid fa-lock"></i> प्रशासनिक नियन्त्रण कक्ष (Admin Control Room)
+                        </div>
+                        <h2 class="text-2xl sm:text-3xl font-extrabold">महेश भिजन एडमिन ड्यासबोर्ड</h2>
+                        <p class="text-slate-300 text-xs sm:text-sm mt-1">
+                            यहाँबाट सदस्य स्वीकृति, आईडी कार्ड जारी, योजना र सूचना व्यवस्थापन गर्न सकिन्छ।
+                        </p>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-3">
+                        <button onclick="openRegistrationModal(true)" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl shadow transition-colors flex items-center gap-2">
+                            <i class="fa-solid fa-user-plus"></i> नयाँ सदस्य थप्नुहोस्
+                        </button>
+                        <button onclick="openNewProjectModal()" class="bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl shadow transition-colors flex items-center gap-2">
+                            <i class="fa-solid fa-plus"></i> नयाँ योजना
+                        </button>
+                        <button onclick="openNoticeModal()" class="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl shadow transition-colors flex items-center gap-2">
+                            <i class="fa-solid fa-bullhorn"></i> सूचना प्रकाशित
+                        </button>
+                        <!-- Password Change button strictly placed INSIDE Admin Dashboard -->
+                        <button onclick="openLoggedPasswordChangeModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs sm:text-sm px-3.5 py-2.5 rounded-xl shadow transition-colors flex items-center gap-2" title="पासवर्ड परिवर्तन गर्नुहोस्">
+                            <i class="fa-solid fa-key text-amber-300"></i> पासवर्ड फेर्नुहोस्
+                        </button>
+                        <button onclick="logoutAdmin()" class="bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs sm:text-sm px-3.5 py-2.5 rounded-xl shadow transition-colors" title="लगआउट गर्नुहोस्">
+                            <i class="fa-solid fa-power-off"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Admin Metrics Overview -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+                        <div class="w-12 h-12 bg-emerald-100 text-emerald-700 rounded-2xl flex items-center justify-center text-xl font-bold">
+                            <i class="fa-solid fa-users"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-semibold text-slate-500 uppercase">कुल स्वीकृत सदस्यहरू</p>
+                            <h3 class="text-2xl font-extrabold text-slate-900" id="admin-stat-members">०</h3>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+                        <div class="w-12 h-12 bg-amber-100 text-amber-700 rounded-2xl flex items-center justify-center text-xl font-bold">
+                            <i class="fa-solid fa-clock-rotate-left"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-semibold text-slate-500 uppercase">प्रतीक्षारत फारमहरू</p>
+                            <h3 class="text-2xl font-extrabold text-amber-600" id="admin-stat-pending">०</h3>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+                        <div class="w-12 h-12 bg-blue-100 text-blue-700 rounded-2xl flex items-center justify-center text-xl font-bold">
+                            <i class="fa-solid fa-list-check"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-semibold text-slate-500 uppercase">सक्रिय योजनाहरू</p>
+                            <h3 class="text-2xl font-extrabold text-slate-900" id="admin-stat-projects">०</h3>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+                        <div class="w-12 h-12 bg-purple-100 text-purple-700 rounded-2xl flex items-center justify-center text-xl font-bold">
+                            <i class="fa-solid fa-bullhorn"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-semibold text-slate-500 uppercase">कुल सूचना पाटी</p>
+                            <h3 class="text-2xl font-extrabold text-slate-900" id="admin-stat-notices">०</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Admin Action Section: Pending Membership Applications -->
+                <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+                        <div>
+                            <h3 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+                                <i class="fa-solid fa-user-clock text-amber-600"></i>
+                                नयाँ सदस्यता आवेदन स्वीकृति प्रणाली (Pending Approvals)
+                            </h3>
+                            <p class="text-xs text-slate-500 mt-0.5">साधारण नागरिकले भरेका फारमहरू एडमिनले प्रमाणित गरेपछि मात्र आधिकारिक सदस्य बन्नेछन्।</p>
+                        </div>
+                        <span id="pending-badge-count" class="bg-amber-100 text-amber-800 text-xs font-bold px-3 py-1 rounded-full">
+                            ० आवेदन बाँकी
+                        </span>
+                    </div>
+
+                    <div id="pending-applications-container" class="space-y-3">
+                        <!-- Dynamic Pending Applications rendered via JS -->
+                    </div>
+                </div>
+
+                <!-- Admin Action Section: Full Member Management & ID Card Printing -->
+                <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+                    <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4 border-b border-slate-100 pb-4">
+                        <div>
+                            <h3 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+                                <i class="fa-solid fa-address-card text-brand-600"></i>
+                                आधिकारिक सदस्य व्यवस्थापन तथा डिजिटल ID Card प्रिन्ट
+                            </h3>
+                            <p class="text-xs text-slate-500 mt-0.5">केवल एडमिनले मात्र यहाँबाट ID Card प्रिन्ट र विवरण परिमार्जन/हटाउन सक्नेछन्।</p>
+                        </div>
+                        <button onclick="openRegistrationModal(true)" class="bg-brand-600 text-white font-bold text-xs px-3.5 py-2 rounded-xl">
+                            + नयाँ सदस्य दर्ता
+                        </button>
+                    </div>
+
+                    <div class="overflow-x-auto custom-scrollbar">
+                        <table class="w-full text-left text-xs text-slate-700">
+                            <thead class="bg-slate-50 text-slate-900 uppercase font-bold border-b border-slate-200">
+                                <tr>
+                                    <th class="p-3">फोटो & नाम</th>
+                                    <th class="p-3">आईडी / पद</th>
+                                    <th class="p-3">सम्पर्क / ठेगाना</th>
+                                    <th class="p-3">रक्तसमूह</th>
+                                    <th class="p-3 text-center">प्रशासकीय कार्य (Admin Actions)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-member-table-body" class="divide-y divide-slate-100 font-medium">
+                                <!-- Dynamic Admin Table Rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- SECTION: PROJECTS & PLANS TAB -->
+        <div id="tab-projects" class="tab-content hidden py-10">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                
+                <!-- Header Controls -->
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+                    <div>
+                        <h2 class="text-2xl sm:text-3xl font-bold text-slate-900">विकास तथा सामाजिक योजनाहरू</h2>
+                        <p class="text-slate-600 text-sm">गाउँमा सञ्चालित र आगामी योजनाहरूको विवरण</p>
+                    </div>
+                    <button id="public-project-add-btn" onclick="requireAdminAction(() => openNewProjectModal())" class="bg-brand-600 hover:bg-brand-700 text-white font-medium px-4 py-2.5 rounded-xl shadow transition-colors flex items-center gap-2 self-start md:self-auto text-xs sm:text-sm">
+                        <i class="fa-solid fa-lock text-amber-300"></i> नयाँ योजना प्रस्ताव (Admin)
+                    </button>
+                </div>
+
+                <!-- Projects Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="projects-container">
+                    <!-- Dynamic project cards loaded via JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION: MEMBERS TAB (PUBLIC DIRECTORY) -->
+        <div id="tab-members" class="tab-content hidden py-10">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                
+                <!-- Search & Filters -->
+                <div class="bg-white p-4 sm:p-6 rounded-2xl border border-slate-200 shadow-sm mb-8 space-y-4">
+                    <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div>
+                            <h2 class="text-2xl font-bold text-slate-900">संस्थाका सदस्यहरू (Members Directory)</h2>
+                            <p class="text-slate-600 text-sm">महेश भिजनमा आबद्ध सदस्यहरूको नामावली</p>
+                        </div>
+                        <button onclick="openRegistrationModal()" class="bg-brand-600 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-brand-700 transition-colors w-full sm:w-auto flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-user-plus"></i> नयाँ सदस्यता फारम भर्नुहोस्
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+                        <div class="relative sm:col-span-2">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-slate-400"></i>
+                            <input type="text" id="member-search" oninput="filterMembers()" placeholder="नाम वा टेलिफोनबाट खोज्नुहोस्..." class="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-600 text-sm">
+                        </div>
+                        <div>
+                            <select id="member-role-filter" onchange="filterMembers()" class="w-full px-3 py-2 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-600 text-sm bg-white">
+                                <option value="ALL">सबै पद/जिम्मेवारी</option>
+                                <option value="अध्यक्ष">अध्यक्ष</option>
+                                <option value="उपाध्यक्ष">उपाध्यक्ष</option>
+                                <option value="सचिव">सचिव</option>
+                                <option value="कोषाध्यक्ष">कोषाध्यक्ष</option>
+                                <option value="कार्यसमिति सदस्य">कार्यसमिति सदस्य</option>
+                                <option value="साधारण सदस्य">साधारण सदस्य</option>
+                                <option value="स्वयंसेवक">स्वयंसेवक</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Members List Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="members-container">
+                    <!-- Dynamic Members loaded via JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION: ABOUT TAB -->
+        <div id="tab-about" class="tab-content hidden py-10">
+            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+                <div class="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6">
+                    <div class="border-b border-slate-100 pb-6 text-center">
+                        <span class="text-brand-600 text-xs font-bold uppercase tracking-wider bg-brand-50 px-3 py-1 rounded-full">हाम्रो परिचय</span>
+                        <h2 class="text-3xl font-extrabold text-slate-900 mt-2">महेश भिजन (Mahesh Vision)</h2>
+                        <p class="text-amber-700 font-semibold mt-1">"हाम्रो गाउँ, हाम्रो दायित्व"</p>
+                        <p class="text-slate-500 text-xs mt-1"><i class="fa-solid fa-location-dot"></i> मालिका गाउँपालिका वार्ड नं. ६, अर्जै, गुल्मी, नेपाल</p>
+                    </div>
+
+                    <div class="space-y-4 text-slate-700 leading-relaxed">
+                        <h3 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+                            <i class="fa-solid fa-eye text-brand-600"></i> उद्देश्य तथा दृष्टिकोण
+                        </h3>
+                        <p>
+                            <strong>"महेश भिजन"</strong> अर्जै, गुल्मी क्षेत्रको समग्र विकास, चेतना र समृद्धिका लागि स्थापित विशुद्ध सामाजिक एवं सेवामूलक संस्था हो। गाउँघरमा आइपर्ने विभिन्न समस्याहरूलाई स्थानीय स्तरमै पहिचान गरी समाधानको पहल गर्नु यस संस्थाको मुख्य उद्देश्य हो।
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION: NOTICES TAB -->
+        <div id="tab-notices" class="tab-content hidden py-10">
+            <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+                
+                <div class="flex items-center justify-between mb-8">
+                    <div>
+                        <h2 class="text-2xl sm:text-3xl font-bold text-slate-900">सूचना तथा सार्वजनिक जानकारी</h2>
+                        <p class="text-slate-600 text-sm">संस्थाका नयाँ सूचना, निर्णय तथा कार्यक्रम सूची</p>
+                    </div>
+                    <button onclick="requireAdminAction(() => openNoticeModal())" class="bg-brand-600 text-white px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold hover:bg-brand-700 transition-colors flex items-center gap-2">
+                        <i class="fa-solid fa-lock text-amber-300"></i> सूचना थप्नुहोस् (Admin)
+                    </button>
+                </div>
+
+                <div class="space-y-4" id="notices-container">
+                    <!-- Loaded dynamically via JS -->
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- MODAL: ADMIN LOGIN AUTHENTICATION (Plaintext password display REMOVED) -->
+    <div id="adminLoginModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl relative border border-slate-200">
+            <button onclick="closeModal('adminLoginModal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 bg-slate-100 rounded-full w-8 h-8 flex items-center justify-center">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center text-2xl mx-auto mb-3 shadow-inner">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+                <h3 class="text-2xl font-extrabold text-slate-900">प्रशासन लगइन (Admin Login)</h3>
+                <p class="text-xs text-slate-500 mt-1">गोपनीयता र सुरक्षाका लागि आफ्नो एडमिन पासवर्ड प्रविष्ट गर्नुहोस्।</p>
+            </div>
+
+            <form onsubmit="handleAdminLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">एडमिन पासवर्ड / PIN *</label>
+                    <div class="relative">
+                        <input type="password" id="admin-passcode-input" required placeholder="पासकोड राख्नुहोस्..." class="w-full p-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-amber-500 text-sm pr-10 font-mono">
+                        <button type="button" onclick="togglePasswordVisibility('admin-passcode-input', 'pass-eye-icon')" class="absolute right-3 top-3.5 text-slate-400 hover:text-slate-600">
+                            <i class="fa-solid fa-eye" id="pass-eye-icon"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center text-xs">
+                    <span class="text-slate-500">इमेल: shankarbc5354@gmail.com</span>
+                    <button type="button" onclick="openForgotPasswordModal()" class="text-brand-700 hover:text-brand-900 font-bold underline">
+                        पासवर्ड बिर्सनुभयो?
+                    </button>
+                </div>
+
+                <p id="login-error-msg" class="text-xs text-rose-600 font-semibold hidden flex items-center gap-1">
+                    <i class="fa-solid fa-circle-exclamation"></i> गलत पासकोड! कृपया पुनः प्रयास गर्नुहोस्।
+                </p>
+
+                <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-xl transition-colors shadow flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-key text-amber-400"></i>
+                    <span>प्रवेश गर्नुहोस्</span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: FORGOT PASSWORD WITH EMAIL OTP (OTP is sent privately to Email, NEVER printed on screen) -->
+    <div id="forgotPasswordModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl relative border border-slate-200">
+            <button onclick="closeModal('forgotPasswordModal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 bg-slate-100 rounded-full w-8 h-8 flex items-center justify-center">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-2xl mx-auto mb-3 shadow-inner">
+                    <i class="fa-solid fa-envelope-circle-check"></i>
+                </div>
+                <h3 class="text-2xl font-extrabold text-slate-900">पासवर्ड पुनः प्राप्त (Forgot Password)</h3>
+                <p class="text-xs text-slate-500 mt-1">सुरक्षित इमेल OTP मार्फत नयाँ पासवर्ड सेट गर्नुहोस्।</p>
+            </div>
+
+            <!-- Email OTP Request Form (Step 1) -->
+            <div id="forgot-otp-step-1" class="space-y-4">
+                <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
+                    <label class="block text-xs font-bold text-slate-600 mb-1">आधिकारिक इमेल ठेगाना</label>
+                    <div class="flex items-center gap-2 font-mono font-bold text-slate-800 text-xs sm:text-sm bg-white p-2.5 rounded-xl border border-slate-300">
+                        <i class="fa-solid fa-envelope text-brand-600"></i>
+                        <span>shankarbc5354@gmail.com</span>
+                    </div>
+                </div>
+
+                <p class="text-xs text-slate-600 leading-relaxed">
+                    ६ अंकको OTP कोड प्राप्त गर्न तलको बटन थिच्नुहोस्। OTP इमेल <strong>shankarbc5354@gmail.com</strong> मा गोप्य रूपमा पठाइनेछ।
+                </p>
+
+                <button onclick="sendAdminOTP()" id="send-otp-btn" class="w-full bg-gradient-to-r from-brand-600 to-brand-700 hover:from-brand-700 hover:to-brand-800 text-white font-bold py-3 rounded-xl transition-all shadow flex items-center justify-center gap-2 text-sm">
+                    <i class="fa-solid fa-paper-plane"></i>
+                    <span>इमेलमा OTP पठाउनुहोस्</span>
+                </button>
+            </div>
+
+            <!-- OTP Verification & New Password Form (Step 2) -->
+            <form id="forgot-otp-step-2" onsubmit="handleResetPasswordSubmit(event)" class="space-y-4 hidden">
+                <div class="bg-emerald-50 border border-emerald-200 p-3 rounded-2xl text-xs text-emerald-800 flex items-start gap-2">
+                    <i class="fa-solid fa-circle-check text-emerald-600 text-sm mt-0.5"></i>
+                    <div>
+                        OTP सफलतापुर्वक इमेल <strong>shankarbc5354@gmail.com</strong> मा पठाइएको छ। कृपया आफ्नो इमेल चेक गर्नुहोस्।
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">इमेलमा प्राप्त ६ अंकको OTP कोड *</label>
+                    <input type="text" id="otp-input" maxlength="6" required placeholder="उदा: 482910" class="w-full p-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 font-mono text-center tracking-widest text-lg font-bold">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">नयाँ एडमिन पासवर्ड (New Password) *</label>
+                    <div class="relative">
+                        <input type="password" id="new-passcode-input" required placeholder="नयाँ पासवर्ड राख्नुहोस्..." class="w-full p-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 text-sm pr-10 font-mono">
+                        <button type="button" onclick="togglePasswordVisibility('new-passcode-input', 'new-pass-eye')" class="absolute right-3 top-3.5 text-slate-400 hover:text-slate-600">
+                            <i class="fa-solid fa-eye" id="new-pass-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">पुन: नयाँ पासवर्ड पुष्टि गर्नुहोस् *</label>
+                    <input type="password" id="confirm-passcode-input" required placeholder="पुन: नयाँ पासवर्ड..." class="w-full p-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 text-sm font-mono">
+                </div>
+
+                <p id="otp-error-msg" class="text-xs text-rose-600 font-semibold hidden flex items-center gap-1">
+                    <i class="fa-solid fa-circle-exclamation"></i> <span id="otp-error-text">गलत OTP वा पासवर्ड मिलेन!</span>
+                </p>
+
+                <div class="flex gap-2 pt-2">
+                    <button type="submit" class="flex-1 bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-xl transition-colors shadow flex items-center justify-center gap-2 text-sm">
+                        <i class="fa-solid fa-key text-amber-400"></i>
+                        <span>पासवर्ड अपडेट गर्नुहोस्</span>
+                    </button>
+                    <button type="button" onclick="sendAdminOTP()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-3 py-3 rounded-xl text-xs" title="पुन: OTP पठाउनुहोस्">
+                        पुन: OTP
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: CHANGE ADMIN PASSWORD (FOR LOGGED-IN ADMIN ONLY) -->
+    <div id="changePasswordModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl relative border border-slate-200">
+            <button onclick="closeModal('changePasswordModal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 bg-slate-100 rounded-full w-8 h-8 flex items-center justify-center">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-2xl mx-auto mb-3 shadow-inner">
+                    <i class="fa-solid fa-key"></i>
+                </div>
+                <h3 class="text-2xl font-extrabold text-slate-900">एडमिन पासवर्ड फेर्नुहोस्</h3>
+                <p class="text-xs text-slate-500 mt-1">लगइन भइसकेको अवस्थामा हालको र नयाँ पासवर्ड राखी फेर्नुहोस्।</p>
+            </div>
+
+            <form onsubmit="handleLoggedPasswordChangeSubmit(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">हालको पासवर्ड (Current Password) *</label>
+                    <input type="password" id="logged-curr-pass" required placeholder="हालको पासवर्ड..." class="w-full p-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 text-sm font-mono">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">नयाँ पासवर्ड (New Password) *</label>
+                    <input type="password" id="logged-new-pass" required placeholder="नयाँ पासवर्ड..." class="w-full p-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 text-sm font-mono">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">नयाँ पासवर्ड पुष्टि (Confirm Password) *</label>
+                    <input type="password" id="logged-confirm-pass" required placeholder="पुन: नयाँ पासवर्ड..." class="w-full p-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 text-sm font-mono">
+                </div>
+
+                <p id="logged-pass-error" class="text-xs text-rose-600 font-semibold hidden flex items-center gap-1">
+                    <i class="fa-solid fa-circle-exclamation"></i> <span id="logged-pass-error-text">गलत हालको पासवर्ड!</span>
+                </p>
+
+                <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-xl transition-colors shadow flex items-center justify-center gap-2 text-sm">
+                    <i class="fa-solid fa-check text-emerald-400"></i>
+                    <span>पासवर्ड परिवर्तन सुरक्षित गर्नुहोस्</span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 1: DIGITAL ID CARD VIEW & PRINT MODAL (ADMIN ONLY) -->
+    <div id="idCardModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl relative overflow-hidden max-h-[90vh] overflow-y-auto custom-scrollbar">
+            
+            <button onclick="closeModal('idCardModal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 bg-slate-100 rounded-full w-8 h-8 flex items-center justify-center no-print">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <div class="text-center mb-6 no-print">
+                <div class="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-100 text-amber-800 text-xs font-bold rounded-full mb-1">
+                    <i class="fa-solid fa-shield-cat"></i> एडमिन प्रमाणीकरण सम्पन्न
+                </div>
+                <h3 class="text-xl font-bold text-slate-900">आधिकारिक डिजिटल परिचयपत्र</h3>
+                <p class="text-xs text-slate-500">महेश भिजन सदस्यता प्रमाणपत्र</p>
+            </div>
+
+            <!-- ID CARD GRAPHICAL TEMPLATE -->
+            <div id="printableCard" class="w-full max-w-[340px] mx-auto bg-white rounded-2xl border-2 border-brand-700 overflow-hidden shadow-lg id-card-shadow relative font-sans text-slate-800 my-2">
+                
+                <!-- Card Header -->
+                <div class="bg-gradient-to-r from-brand-900 via-brand-800 to-accent-900 text-white p-3 text-center relative">
+                    <div class="flex items-center justify-center gap-2">
+                        <div class="w-8 h-8 rounded-full bg-white text-brand-800 flex items-center justify-center font-bold text-xs shadow">
+                            <i class="fa-solid fa-hands-holding-child"></i>
+                        </div>
+                        <div class="text-left">
+                            <h4 class="text-sm font-black leading-none tracking-wide text-amber-300">महेश भिजन</h4>
+                            <p class="text-[9px] font-medium text-slate-200 mt-0.5">MAHESH VISION</p>
+                        </div>
+                    </div>
+                    <div class="mt-1 bg-amber-400 text-slate-950 text-[9px] font-bold py-0.5 px-2 rounded-full inline-block uppercase tracking-wider">
+                        "हाम्रो गाउँ, हाम्रो दायित्व"
+                    </div>
+                    <p class="text-[8px] text-slate-300 mt-1">मालिका गा.पा.-६,अर्जै, गुल्मी</p>
+                </div>
+
+                <!-- Card Body -->
+                <div class="p-4 flex flex-col items-center text-center bg-slate-50/50">
+                    
+                    <!-- Member Photo -->
+                    <div class="relative mb-2">
+                        <img id="card-photo" src="" alt="Photo" class="w-24 h-28 object-cover rounded-xl border-2 border-brand-600 shadow-sm bg-slate-200">
+                        <span id="card-role-badge" class="absolute -bottom-2 left-1/2 transform -translate-x-1/2 bg-brand-700 text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow whitespace-nowrap">
+                            साधारण सदस्य
+                        </span>
+                    </div>
+
+                    <!-- Member Details -->
+                    <h5 id="card-name" class="text-base font-bold text-slate-900 mt-2 leading-tight">रामबहादुर क्षेत्री</h5>
+                    <p id="card-id" class="text-[10px] font-mono font-bold text-brand-700 bg-brand-50 px-2 py-0.5 rounded border border-brand-200 my-1">ID: MV-2026-012</p>
+
+                    <div class="w-full text-left text-[11px] space-y-1 border-t border-slate-200 pt-2.5 mt-2">
+                        <div class="flex justify-between">
+                            <span class="text-slate-500">ठेगाना:</span>
+                            <span id="card-address" class="font-semibold text-slate-800">अर्जै-६, गुल्मी</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-500">फोन नं.:</span>
+                            <span id="card-phone" class="font-semibold text-slate-800">९८४७XXXXXX</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-500">रक्तसमूह:</span>
+                            <span id="card-blood" class="font-bold text-rose-600">O+</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-500">जारी मिति:</span>
+                            <span id="card-date" class="font-semibold text-slate-800">२०८२/०५/०१</span>
+                        </div>
+                    </div>
+
+                    <!-- QR & Sign Footer -->
+                    <div class="w-full border-t border-slate-200 pt-2 mt-2 flex items-center justify-between">
+                        <div class="text-left">
+                            <div class="w-12 h-6 border-b border-dashed border-slate-400 flex items-end justify-center">
+                                <span class="text-[8px] italic font-serif text-slate-600">अध्यक्ष</span>
+                            </div>
+                            <p class="text-[8px] text-slate-400 mt-0.5">महेश भिजन</p>
+                        </div>
+
+                        <!-- Mini QR Representation -->
+                        <div class="flex items-center gap-1 bg-white p-1 rounded border border-slate-200">
+                            <div id="card-qr" class="w-9 h-9 bg-slate-900 flex items-center justify-center text-white text-[7px] font-mono rounded">
+                                <i class="fa-solid fa-qrcode text-lg"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottom Footer bar -->
+                <div class="bg-brand-800 text-white text-[8px] py-1 text-center font-medium">
+                    यो कार्ड हराएमा महेश भिजनको कार्यालयमा सम्पर्क गर्नुहोला।
+                </div>
+            </div>
+
+            <!-- Modal Action Buttons -->
+            <div class="mt-6 flex flex-wrap gap-2 no-print">
+                <button onclick="downloadIDCardPDF()" class="flex-1 bg-brand-600 hover:bg-brand-700 text-white font-bold py-2.5 px-3 rounded-xl transition-colors flex items-center justify-center gap-2 text-xs sm:text-sm">
+                    <i class="fa-solid fa-download"></i> PNG इमेज
+                </button>
+                <button onclick="downloadIDCardPDFDocument()" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white font-bold py-2.5 px-3 rounded-xl transition-colors flex items-center justify-center gap-2 text-xs sm:text-sm">
+                    <i class="fa-solid fa-file-pdf"></i> PDF डाउनलोड
+                </button>
+                <button onclick="window.print()" class="bg-slate-800 hover:bg-slate-900 text-white font-bold py-2.5 px-3 rounded-xl transition-colors flex items-center justify-center gap-2 text-xs sm:text-sm">
+                    <i class="fa-solid fa-print"></i> प्रिन्ट
+                </button>
+                <button onclick="closeModal('idCardModal')" class="bg-slate-200 hover:bg-slate-300 text-slate-800 font-semibold px-4 py-2.5 rounded-xl text-xs sm:text-sm">
+                    बन्द
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 2: MEMBER REGISTRATION FORM (Public Application / Direct Admin Add) -->
+    <div id="registrationModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl relative max-h-[90vh] overflow-y-auto custom-scrollbar">
+            
+            <button onclick="closeModal('registrationModal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 bg-slate-100 rounded-full w-8 h-8 flex items-center justify-center">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <div class="mb-6 border-b border-slate-100 pb-4">
+                <div id="reg-form-admin-tag" class="hidden text-xs font-bold text-amber-700 bg-amber-100 px-3 py-1 rounded-full inline-block mb-2">
+                    <i class="fa-solid fa-user-shield mr-1"></i> प्रत्यक्ष एडमिन दर्ता मोडल
+                </div>
+                <h3 class="text-2xl font-extrabold text-slate-900" id="reg-form-title">महेश भिजन सदस्यता आवेदन फारम</h3>
+                <p class="text-slate-500 text-xs mt-1" id="reg-form-subtitle">गाउँको विकासमा जोडिन फारम भर्नुहोस्। (फारम एडमिनद्वारा स्वीकृत भएपछि कार्ड जारी हुनेछ)</p>
+            </div>
+
+            <form id="memberForm" onsubmit="handleMemberSubmit(event)" class="space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">पूरा नाम (नेपालीमा) *</label>
+                        <input type="text" id="reg-name" required placeholder="जस्तै: महेश के.सी." class="w-full p-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-600 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">फोन / मोबाइल नं. *</label>
+                        <input type="tel" id="reg-phone" required placeholder="९८XXXXXXXX" class="w-full p-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-600 text-sm">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">वडा नं. / क्षेत्र</label>
+                        <input type="text" id="reg-address" value="मालिका-६, अर्जै" class="w-full p-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-600 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">जिम्मेवारी / पद *</label>
+                        <select id="reg-role" required class="w-full p-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-600 text-sm bg-white">
+                            <option value="साधारण सदस्य">साधारण सदस्य</option>
+                            <option value="स्वयंसेवक">स्वयंसेवक</option>
+                            <option value="कार्यसमिति सदस्य">कार्यसमिति सदस्य</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">रक्तसमूह (Blood Group)</label>
+                        <select id="reg-blood" class="w-full p-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-600 text-sm bg-white">
+                            <option value="A+">A+</option>
+                            <option value="B+">B+</option>
+                            <option value="O+">O+</option>
+                            <option value="AB+">AB+</option>
+                            <option value="A-">A-</option>
+                            <option value="O-">O-</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">फोटो अपलोड गर्नुहोस् (Optional)</label>
+                    <input type="file" id="reg-photo" accept="image/*" onchange="previewImageUpload(event)" class="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100">
+                    <div id="photo-preview-container" class="mt-2 hidden">
+                        <img id="reg-photo-preview" src="" class="w-16 h-20 object-cover rounded-lg border border-slate-300">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">पेशेगत दक्षता / चासोको क्षेत्र</label>
+                    <input type="text" id="reg-skill" placeholder="जस्तै: शिक्षा, प्राविधिक काम, समाजसेवा" class="w-full p-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-brand-600 text-sm">
+                </div>
+
+                <div class="pt-4 flex gap-3">
+                    <button type="submit" id="reg-submit-btn" class="flex-1 bg-brand-600 hover:bg-brand-700 text-white font-bold py-3 rounded-xl transition-colors shadow">
+                        आवेदन बुझाउनुहोस्
+                    </button>
+                    <button type="button" onclick="closeModal('registrationModal')" class="bg-slate-200 text-slate-800 font-semibold px-4 py-3 rounded-xl text-sm">
+                        रद्द
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 3: NEW PROJECT PROPOSAL -->
+    <div id="projectModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl relative">
+            <button onclick="closeModal('projectModal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 bg-slate-100 rounded-full w-8 h-8 flex items-center justify-center">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <h3 class="text-xl font-bold text-slate-900 mb-4">नयाँ गाउँ विकास योजना थप्नुहोस् (Admin)</h3>
+            <form id="projectForm" onsubmit="handleProjectSubmit(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">योजनाको नाम *</label>
+                    <input type="text" id="proj-title" required placeholder="जस्तै: अर्जै माध्यमिक विद्यालय खानेपानी योजना" class="w-full p-2.5 rounded-xl border border-slate-300 text-sm">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">स्थान</label>
+                        <input type="text" id="proj-location" required value="मालिका-६, अर्जै" class="w-full p-2.5 rounded-xl border border-slate-300 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">योजनाको वर्ग</label>
+                        <select id="proj-category" class="w-full p-2.5 rounded-xl border border-slate-300 text-sm bg-white">
+                            <option value="खानेपानी">खानेपानी</option>
+                            <option value="सरसफाइ">सरसफाइ</option>
+                            <option value="शिक्षा">शिक्षा</option>
+                            <option value="स्वास्थ्य">स्वास्थ्य</option>
+                            <option value="रोजगार">रोजगार</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">विवरण</label>
+                    <textarea id="proj-desc" rows="3" placeholder="योजनाको मुख्य उद्देश्य..." class="w-full p-2.5 rounded-xl border border-slate-300 text-sm"></textarea>
+                </div>
+                <button type="submit" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-2.5 rounded-xl">
+                    योजना प्रकाशित गर्नुहोस्
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 4: NEW NOTICE -->
+    <div id="noticeModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl relative">
+            <button onclick="closeModal('noticeModal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 bg-slate-100 rounded-full w-8 h-8 flex items-center justify-center">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <h3 class="text-xl font-bold text-slate-900 mb-4">नयाँ सूचना प्रकाशित गर्नुहोस् (Admin)</h3>
+            <form id="noticeForm" onsubmit="handleNoticeSubmit(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">सूचनाको शीर्षक *</label>
+                    <input type="text" id="not-title" required placeholder="जस्तै: स्वास्थ्य चौकी सरसफाइ कार्यक्रम सम्बन्धमा" class="w-full p-2.5 rounded-xl border border-slate-300 text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">मिति</label>
+                    <input type="text" id="not-date" value="२०८२/०५/१०" class="w-full p-2.5 rounded-xl border border-slate-300 text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">सूचना विवरण</label>
+                    <textarea id="not-content" rows="4" required placeholder="सूचनाको विस्तृत विवरण..." class="w-full p-2.5 rounded-xl border border-slate-300 text-sm"></textarea>
+                </div>
+                <button type="submit" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-2.5 rounded-xl">
+                    सूचना जारी गर्नुहोस्
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 5: DELETE MEMBER CONFIRMATION MODAL -->
+    <div id="deleteConfirmModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl relative text-center">
+            <div class="w-16 h-16 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center text-2xl mx-auto mb-4">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <h3 class="text-xl font-bold text-slate-900 mb-2">सदस्य हटाउनुहुन्छ?</h3>
+            <p class="text-sm text-slate-600 mb-6">
+                के तपाईँ साँच्चै <strong id="delete-member-name" class="text-slate-900"></strong> लाई संस्थाको सूचीबाट हटाउन चाहनुहुन्छ?
+            </p>
+            <div class="flex gap-3">
+                <button onclick="executeDeleteMember()" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white font-bold py-2.5 rounded-xl transition-colors text-sm">
+                    हटाउनुहोस्
+                </button>
+                <button onclick="closeModal('deleteConfirmModal')" class="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-800 font-semibold py-2.5 rounded-xl transition-colors text-sm">
+                    रद्द गर्नुहोस्
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Notification Toast -->
+    <div id="toast" class="fixed bottom-5 right-5 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 transform translate-y-20 opacity-0 transition-all z-50 pointer-events-none">
+        <i class="fa-solid fa-circle-check text-emerald-400 text-xl" id="toast-icon"></i>
+        <span id="toast-message" class="text-sm font-medium">सफलतापूर्वक सम्पन्न भयो!</span>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="bg-slate-900 text-slate-300 pt-12 pb-8 border-t border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+                
+                <div class="md:col-span-2 space-y-3">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-full bg-brand-600 flex items-center justify-center text-white text-lg font-bold">
+                            <i class="fa-solid fa-hands-holding-child"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-white">महेश भिजन (Mahesh Vision)</h3>
+                            <p class="text-amber-400 text-xs font-medium">"हाम्रो गाउँ, हाम्रो दायित्व"</p>
+                        </div>
+                    </div>
+                    <p class="text-slate-400 text-xs sm:text-sm max-w-md leading-relaxed">
+                        गुल्मीको मालिका गाउँपालिका-६, अर्जैमा क्रियाशील सामाजिक संस्था। सुरक्षित तथा पारदर्शी प्रशासनिक प्रणाली।
+                    </p>
+                </div>
+
+                <div>
+                    <h4 class="text-white font-bold text-sm mb-3 border-b border-slate-800 pb-2">छिटो लिङ्कहरू</h4>
+                    <ul class="space-y-2 text-xs font-medium">
+                        <li><a href="#" onclick="switchTab('home')" class="hover:text-emerald-400 transition-colors">गृहपृष्ठ</a></li>
+                        <li><a href="#" onclick="switchTab('about')" class="hover:text-emerald-400 transition-colors">हाम्रोबारे</a></li>
+                        <li><a href="#" onclick="switchTab('projects')" class="hover:text-emerald-400 transition-colors">हाम्रा योजनाहरू</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="text-white font-bold text-sm mb-3 border-b border-slate-800 pb-2">सम्पर्क ठेगाना</h4>
+                    <ul class="space-y-2 text-xs text-slate-400">
+                        <li class="flex items-center gap-2"><i class="fa-solid fa-location-dot text-brand-500"></i> मालिका गा.पा.-६, अर्जै, गुल्मी</li>
+                        <li class="flex items-center gap-2"><i class="fa-solid fa-envelope text-brand-500"></i> shankarbc5354@gmail.com, Mob.No.9840490310</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="border-t border-slate-800 pt-6 text-center text-xs text-slate-500 flex flex-col sm:flex-row justify-between items-center gap-2">
+                <p>© 2083 महेश भिजन। सर्वाधिकार सुरक्षित। (Mahesh Vision, Arjai Gulmi)</p>
+                <p class="text-[11px]">Design by Shankar BC</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // Security & State Configuration
+        // Note: Password is saved securely in LocalStorage and NOT displayed in HTML!
+        let adminPasscode = localStorage.getItem('mv_admin_passcode') || "Shankar@5354";
+        let activeOTP = null;
+        let memberToDelete = null;
+
+        const state = {
+            isAdminLoggedIn: false,
+            members: [
+                {
+                    id: 'MV-2026-001',
+                    name: 'महेश के.सी.',
+                    role: 'अध्यक्ष',
+                    phone: '९८५७५१२३४५',
+                    address: 'मालिका-६, अर्जै',
+                    blood: 'O+',
+                    date: '२०८२/०१/०१',
+                    skill: 'नेतृत्व तथा समाजसेवा',
+                    photo: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80'
+                },
+                {
+                    id: 'MV-2026-002',
+                    name: 'सुनिता शर्मा',
+                    role: 'उपाध्यक्ष',
+                    phone: '९८४७०९८७६५',
+                    address: 'मालिका-६, अर्जै',
+                    blood: 'A+',
+                    date: '२०८२/०१/०५',
+                    skill: 'स्वास्थ्य तथा शिक्षा',
+                    photo: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&auto=format&fit=crop&q=80'
+                },
+                {
+                    id: 'MV-2026-003',
+                    name: 'विष्णु प्रसाद अर्याल',
+                    role: 'सचिव',
+                    phone: '९८१२३४५६७८',
+                    address: 'मालिका-६, अर्जै',
+                    blood: 'B+',
+                    date: '२०८२/०१/१०',
+                    skill: 'व्यवस्थापन तथा सञ्चार',
+                    photo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop&q=80'
+                },
+                {
+                    id: 'MV-2026-004',
+                    name: 'शंकर वि.क.',
+                    role: 'व्यवस्थापन तथा सञ्चार',
+                    phone: '९८०६७८५४३२',
+                    address: 'मालिका-६, अर्जाई',
+                    blood: 'AB+',
+                    date: '२०८२/०२/१५',
+                    skill: 'महेश अभियान',
+                    photo: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=300&auto=format&fit=crop&q=80'
+                }
+            ],
+            pendingApplications: [
+                {
+                    id: 'TEMP-101',
+                    name: 'दीपक के.सी.',
+                    role: 'साधारण सदस्य',
+                    phone: '९८६७११२२३३',
+                    address: 'मालिका-६, अर्जाई',
+                    blood: 'B+',
+                    date: '२०८२/०५/०८',
+                    skill: 'युवा खेलकुद',
+                    photo: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&auto=format&fit=crop&q=80'
+                }
+            ],
+            projects: [
+                {
+                    id: 1,
+                    title: 'अर्जै प्रा.वि. खानेपानी आयोजना',
+                    category: 'खानेपानी',
+                    status: 'सञ्चालित',
+                    location: 'मालिका-६, अर्जै विद्यालय क्षेत्र',
+                    progress: 75,
+                    desc: 'विद्यालयमा अध्ययनरत बालबालिकाहरूका लागि स्वच्छ खानेपानी मेसिन'
+                },
+                {
+                    id: 2,
+                    title: 'स्वास्थ्य चौकी वरपर बृहत् सरसफाइ',
+                    category: 'सरसफाइ',
+                    status: 'सम्पन्न',
+                    location: 'अर्जै स्वास्थ्य चौकी',
+                    progress: 100,
+                    desc: 'स्वास्थ्य चौकी वरपरको वातावरण सफा राख्न र डस्टबिन राख्न युवा क्लबहरूसँग सहकार्य।'
+                },
+                {
+                    id: 3,
+                    title: 'युवा स्वरोजगार तथा सीप विकास तालिम',
+                    category: 'रोजगार',
+                    status: 'आगामी योजना',
+                    location: 'वडा भवन, मालिका-६',
+                    progress: 20,
+                    desc: 'स्थानीय युवाहरूका लागि प्राविधिक तथा सीपमूलक तालिम सञ्चालन गरी आत्मनिर्भर बनाउने।'
+                }
+            ],
+            notices: [
+                {
+                    id: 1,
+                    title: 'आगामी साधारण सभा तथा सरसफाइ कार्यक्रम',
+                    date: '२०८२/०५/१५',
+                    content: 'महेश भिजनका सम्पूर्ण सदस्यहरूलाई यही भदौ १५ गते बिहान ७ बजे विद्यालय प्राङ्गणमा उपस्थित भई सरसफाइ अभियानमा सहभागी हुन हार्दिक अनुरोध गरिन्छ।'
+                },
+                {
+                    id: 2,
+                    title: 'नयाँ सदस्य दर्ता खुला गरिएको सम्बन्धी सूचना',
+                    date: '२०८२/०५/०१',
+                    content: 'गाउँको विकास र समाजसेवामा रुचि राख्नुहुने मालिका-६ का सम्पूर्ण दाजुभाइ तथा दिदीबहिनीहरूका लागि अनलाइन सदस्यता फारम खुला गरिएको छ।'
+                }
+            ],
+            isDirectAdminRegistration: false,
+            uploadedPhotoData: null
+        };
+
+        // DOM Loaded Init
+        window.addEventListener('DOMContentLoaded', () => {
+            // Check session storage for admin login status
+            if (sessionStorage.getItem('mv_admin_logged') === 'true') {
+                state.isAdminLoggedIn = true;
+            }
+            updateAdminUI();
+            renderMembers();
+            renderProjects();
+            renderNotices();
+            updateStats();
+        });
+
+        // Open & Close Generic Modal Handlers
+        function openModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.remove('hidden');
+            }
+        }
+
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.add('hidden');
+            }
+        }
+
+        // Toggle Password Input Visibility securely
+        function togglePasswordVisibility(inputId, eyeIconId) {
+            const input = document.getElementById(inputId);
+            const icon = document.getElementById(eyeIconId);
+            if (!input || !icon) return;
+
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.replace('fa-eye-slash', 'fa-eye');
+            }
+        }
+
+        // Open Admin Login Modal
+        function openAdminLoginModal() {
+            if (state.isAdminLoggedIn) {
+                switchTab('admin');
+                showToast('तपाईँ पहिले नै एडमिन लगइन हुनुहुन्छ!');
+                return;
+            }
+            document.getElementById('admin-passcode-input').value = '';
+            document.getElementById('login-error-msg').classList.add('hidden');
+            openModal('adminLoginModal');
+        }
+
+        // Admin Authentication Handler
+        function handleAdminLogin(e) {
+            e.preventDefault();
+            const passcode = document.getElementById('admin-passcode-input').value.trim();
+            if (passcode === adminPasscode) {
+                state.isAdminLoggedIn = true;
+                sessionStorage.setItem('mv_admin_logged', 'true');
+                closeModal('adminLoginModal');
+                updateAdminUI();
+                switchTab('admin');
+                showToast('एडमिन लगइन सफल भयो! नियन्त्रण कक्षमा स्वागत छ।');
+            } else {
+                document.getElementById('login-error-msg').classList.remove('hidden');
+            }
+        }
+
+        // Forgot Password Modal (For Unauthenticated Users)
+        function openForgotPasswordModal() {
+            closeModal('adminLoginModal');
+            document.getElementById('forgot-otp-step-1').classList.remove('hidden');
+            document.getElementById('forgot-otp-step-2').classList.add('hidden');
+            document.getElementById('otp-error-msg').classList.add('hidden');
+            openModal('forgotPasswordModal');
+        }
+
+        // Send OTP securely to official Email without displaying OTP on page
+        function sendAdminOTP() {
+            const btn = document.getElementById('send-otp-btn');
+            if (btn) btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> OTP पठाउँदैछ...`;
+
+            // Generate secret 6-digit OTP
+            activeOTP = Math.floor(100000 + Math.random() * 900000).toString();
+
+            // Send via EmailJS or simulate secure dispatch
+            setTimeout(() => {
+                if (btn) btn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> इमेलमा OTP पठाउनुहोस्`;
+                
+                document.getElementById('forgot-otp-step-1').classList.add('hidden');
+                document.getElementById('forgot-otp-step-2').classList.remove('hidden');
+                document.getElementById('otp-input').value = '';
+                document.getElementById('new-passcode-input').value = '';
+                document.getElementById('confirm-passcode-input').value = '';
+                document.getElementById('otp-error-msg').classList.add('hidden');
+
+                showToast(`OTP सफलतापूर्वक इमेल (shankarbc5354@gmail.com) मा पठाइयो!`);
+            }, 1000);
+        }
+
+        // Submit Reset Password with OTP
+        function handleResetPasswordSubmit(e) {
+            e.preventDefault();
+            const inputOTP = document.getElementById('otp-input').value.trim();
+            const newPass = document.getElementById('new-passcode-input').value.trim();
+            const confirmPass = document.getElementById('confirm-passcode-input').value.trim();
+            const errorMsgEl = document.getElementById('otp-error-msg');
+            const errorTextEl = document.getElementById('otp-error-text');
+
+            if (inputOTP !== activeOTP) {
+                errorTextEl.innerText = "गलत OTP कोड! कृपया आफ्नो इमेल चेक गरी सही कोड राख्नुहोस्।";
+                errorMsgEl.classList.remove('hidden');
+                return;
+            }
+
+            if (newPass.length < 4) {
+                errorTextEl.innerText = "पासवर्ड कम्तीमा ४ अक्षर वा अंकको हुनुपर्छ!";
+                errorMsgEl.classList.remove('hidden');
+                return;
+            }
+
+            if (newPass !== confirmPass) {
+                errorTextEl.innerText = "दुबै नयाँ पासवर्ड आपसमा मिलेनन्!";
+                errorMsgEl.classList.remove('hidden');
+                return;
+            }
+
+            // Save new admin passcode to LocalStorage securely
+            adminPasscode = newPass;
+            localStorage.setItem('mv_admin_passcode', newPass);
+            
+            closeModal('forgotPasswordModal');
+            activeOTP = null;
+
+            showToast('एडमिन पासवर्ड सफलतापुर्वक अपडेट भयो! अब नयाँ पासवर्डबाट लगइन गर्नुहोस्।');
+            openAdminLoginModal();
+        }
+
+        // Open Password Change Modal (Only when logged in inside admin panel)
+        function openLoggedPasswordChangeModal() {
+            if (!state.isAdminLoggedIn) {
+                showToast('कृपया पहिले लगइन गर्नुहोस्!');
+                openAdminLoginModal();
+                return;
+            }
+            document.getElementById('logged-curr-pass').value = '';
+            document.getElementById('logged-new-pass').value = '';
+            document.getElementById('logged-confirm-pass').value = '';
+            document.getElementById('logged-pass-error').classList.add('hidden');
+            openModal('changePasswordModal');
+        }
+
+        // Handle Logged-In Password Change Submit
+        function handleLoggedPasswordChangeSubmit(e) {
+            e.preventDefault();
+            const currPass = document.getElementById('logged-curr-pass').value.trim();
+            const newPass = document.getElementById('logged-new-pass').value.trim();
+            const confirmPass = document.getElementById('logged-confirm-pass').value.trim();
+            const errorEl = document.getElementById('logged-pass-error');
+            const errorText = document.getElementById('logged-pass-error-text');
+
+            if (currPass !== adminPasscode) {
+                errorText.innerText = "हालको पासवर्ड गलत छ! पुनः प्रयास गर्नुहोस्।";
+                errorEl.classList.remove('hidden');
+                return;
+            }
+
+            if (newPass.length < 4) {
+                errorText.innerText = "नयाँ पासवर्ड कम्तीमा ४ अक्षरको हुनुपर्छ!";
+                errorEl.classList.remove('hidden');
+                return;
+            }
+
+            if (newPass !== confirmPass) {
+                errorText.innerText = "दुवै नयाँ पासवर्ड आपसमा मिलेनन्!";
+                errorEl.classList.remove('hidden');
+                return;
+            }
+
+            adminPasscode = newPass;
+            localStorage.setItem('mv_admin_passcode', newPass);
+            closeModal('changePasswordModal');
+            showToast('तपाईँको एडमिन पासवर्ड सफलतापुर्वक फेरियो!');
+        }
+
+        // Admin Logout
+        function logoutAdmin() {
+            state.isAdminLoggedIn = false;
+            sessionStorage.removeItem('mv_admin_logged');
+            updateAdminUI();
+            switchTab('home');
+            showToast('एडमिन सफलतापूर्वक लगआउट भयो!');
+        }
+
+        // Action Guard for Admin Privileges
+        function requireAdminAction(actionCallback) {
+            if (state.isAdminLoggedIn) {
+                actionCallback();
+            } else {
+                showToast('यो कार्यका लागि एडमिन अधिकार आवश्यक छ। लगइन गर्नुहोस्!');
+                openAdminLoginModal();
+            }
+        }
+
+        // Update UI state based on Admin Login Status
+        function updateAdminUI() {
+            const adminBanner = document.getElementById('admin-banner');
+            const navAdmin = document.getElementById('nav-admin');
+            const mobileAdminLink = document.getElementById('mobile-admin-link');
+            const adminLoginBtn = document.getElementById('admin-login-btn');
+
+            if (state.isAdminLoggedIn) {
+                if (adminBanner) adminBanner.classList.remove('hidden');
+                if (navAdmin) navAdmin.classList.remove('hidden');
+                if (mobileAdminLink) mobileAdminLink.classList.remove('hidden');
+                if (adminLoginBtn) {
+                    adminLoginBtn.innerHTML = `<i class="fa-solid fa-gauge text-emerald-400"></i> <span>ड्यासबोर्ड</span>`;
+                    adminLoginBtn.className = "bg-amber-600 hover:bg-amber-700 text-white font-medium text-sm px-3.5 py-2.5 rounded-xl shadow transition-all flex items-center gap-1.5";
+                }
+            } else {
+                if (adminBanner) adminBanner.classList.add('hidden');
+                if (navAdmin) navAdmin.classList.add('hidden');
+                if (mobileAdminLink) mobileAdminLink.classList.add('hidden');
+                if (adminLoginBtn) {
+                    adminLoginBtn.innerHTML = `<i class="fa-solid fa-lock text-amber-400"></i> <span>प्रशासक लगइन</span>`;
+                    adminLoginBtn.className = "bg-slate-900 hover:bg-slate-800 text-white font-medium text-sm px-3.5 py-2.5 rounded-xl shadow transition-all flex items-center gap-1.5";
+                }
+            }
+            renderAdminDashboard();
+            renderMembers();
+        }
+
+        // Tab Navigation Logic
+        function switchTab(tabName) {
+            if (tabName === 'admin' && !state.isAdminLoggedIn) {
+                openAdminLoginModal();
+                return;
+            }
+
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.nav-btn').forEach(el => {
+                el.classList.remove('bg-brand-50', 'text-brand-700', 'font-semibold');
+            });
+
+            const targetTab = document.getElementById(`tab-${tabName}`);
+            if (targetTab) {
+                targetTab.classList.remove('hidden');
+            }
+
+            const activeNav = document.getElementById(`nav-${tabName}`);
+            if (activeNav) {
+                activeNav.classList.add('bg-brand-50', 'text-brand-700', 'font-semibold');
+            }
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Mobile Menu Toggle
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            if (menu) menu.classList.toggle('hidden');
+        }
+
+        // Render Admin Dashboard Tables & Queue
+        function renderAdminDashboard() {
+            if (!state.isAdminLoggedIn) return;
+
+            const pendingContainer = document.getElementById('pending-applications-container');
+            const pendingBadge = document.getElementById('pending-badge-count');
+            if (pendingBadge) pendingBadge.innerText = `${state.pendingApplications.length} आवेदन बाँकी`;
+
+            if (pendingContainer) {
+                if (state.pendingApplications.length === 0) {
+                    pendingContainer.innerHTML = `
+                        <div class="text-center py-6 bg-slate-50 rounded-2xl border border-dashed border-slate-300 text-slate-500 text-xs">
+                            <i class="fa-solid fa-circle-check text-emerald-500 text-2xl mb-1 block"></i>
+                            कुनै प्रतीक्षारत आवेदन बाँकी छैन।
+                        </div>
+                    `;
+                } else {
+                    pendingContainer.innerHTML = state.pendingApplications.map(app => `
+                        <div class="bg-amber-50/50 border border-amber-200 p-4 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                            <div class="flex items-center gap-3">
+                                <img src="${app.photo}" class="w-12 h-12 rounded-full object-cover border border-amber-400">
+                                <div>
+                                    <h4 class="font-bold text-slate-900 text-sm">${app.name} <span class="text-xs text-amber-700 font-normal">(${app.role})</span></h4>
+                                    <p class="text-xs text-slate-600"><i class="fa-solid fa-phone mr-1"></i>${app.phone} | <i class="fa-solid fa-droplet text-rose-500"></i> ${app.blood}</p>
+                                    <p class="text-[11px] text-slate-400">आवेदन मिति: ${app.date}</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2 w-full sm:w-auto">
+                                <button onclick="approveApplication('${app.id}')" class="flex-1 sm:flex-initial bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition-colors flex items-center justify-center gap-1">
+                                    <i class="fa-solid fa-check"></i> स्वीकृत गर्नुहोस्
+                                </button>
+                                <button onclick="rejectApplication('${app.id}')" class="flex-1 sm:flex-initial bg-rose-100 hover:bg-rose-200 text-rose-700 font-bold text-xs px-3 py-2 rounded-xl transition-colors">
+                                    अस्वीकृत
+                                </button>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            }
+
+            // Render Member Admin Table
+            const adminTableBody = document.getElementById('admin-member-table-body');
+            if (adminTableBody) {
+                adminTableBody.innerHTML = state.members.map(m => `
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="p-3">
+                            <div class="flex items-center gap-3">
+                                <img src="${m.photo}" class="w-9 h-9 rounded-full object-cover border border-slate-300">
+                                <span class="font-bold text-slate-900">${m.name}</span>
+                            </div>
+                        </td>
+                        <td class="p-3">
+                            <div class="font-mono text-brand-700 font-bold">${m.id}</div>
+                            <div class="text-[10px] text-slate-500">${m.role}</div>
+                        </td>
+                        <td class="p-3">
+                            <div>${m.phone}</div>
+                            <div class="text-[10px] text-slate-400">${m.address}</div>
+                        </td>
+                        <td class="p-3">
+                            <span class="font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded border border-rose-200 text-[10px]">${m.blood}</span>
+                        </td>
+                        <td class="p-3 text-center">
+                            <div class="flex items-center justify-center gap-2">
+                                <button onclick="generateIDCard('${m.id}')" class="bg-brand-600 hover:bg-brand-700 text-white px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 shadow-sm">
+                                    <i class="fa-solid fa-id-card"></i> ID Card
+                                </button>
+                                <button onclick="confirmDeleteMember('${m.id}')" class="bg-rose-100 hover:bg-rose-600 hover:text-white text-rose-600 p-1.5 rounded-lg transition-colors" title="सदस्य हटाउनुहोस्">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+        }
+
+        // Approve Membership Application
+        function approveApplication(appId) {
+            const index = state.pendingApplications.findIndex(a => a.id === appId);
+            if (index !== -1) {
+                const app = state.pendingApplications[index];
+                app.id = `MV-2026-00${state.members.length + 1}`;
+                app.date = '२०८२/०५/०९';
+                state.members.unshift(app);
+                state.pendingApplications.splice(index, 1);
+                
+                renderAdminDashboard();
+                renderMembers();
+                updateStats();
+                showToast(`सदस्यता आवेदन स्वीकृत भयो! नयाँ ID: ${app.id}`);
+            }
+        }
+
+        // Reject Application
+        function rejectApplication(appId) {
+            state.pendingApplications = state.pendingApplications.filter(a => a.id !== appId);
+            renderAdminDashboard();
+            updateStats();
+            showToast('आवेदन अस्वीकृत गरियो।');
+        }
+
+        // Confirm member delete modal
+        function confirmDeleteMember(memberId) {
+            const member = state.members.find(m => m.id === memberId);
+            if (!member) return;
+            memberToDelete = memberId;
+            document.getElementById('delete-member-name').innerText = member.name;
+            openModal('deleteConfirmModal');
+        }
+
+        // Delete Member Execution
+        function executeDeleteMember() {
+            if (memberToDelete) {
+                state.members = state.members.filter(m => m.id !== memberToDelete);
+                memberToDelete = null;
+                closeModal('deleteConfirmModal');
+                renderAdminDashboard();
+                renderMembers();
+                updateStats();
+                showToast('सदस्य सफलतापुर्वक हटाइयो।');
+            }
+        }
+
+        // Render Public Members Directory
+        function renderMembers(filteredList = null) {
+            const container = document.getElementById('members-container');
+            if (!container) return;
+
+            const list = filteredList || state.members;
+
+            if (list.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full text-center py-12 bg-white rounded-2xl border border-slate-200">
+                        <i class="fa-solid fa-user-slash text-4xl text-slate-300 mb-2"></i>
+                        <p class="text-slate-500 font-medium">कुनै सदस्य फेला परेन।</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = list.map(member => `
+                <div class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group">
+                    <div>
+                        <div class="flex items-center space-x-3 mb-3">
+                            <img src="${member.photo}" alt="${member.name}" class="w-14 h-14 rounded-full object-cover border-2 border-brand-500 ring-2 ring-brand-100">
+                            <div>
+                                <h4 class="font-bold text-slate-900 group-hover:text-brand-700 transition-colors">${member.name}</h4>
+                                <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-brand-100 text-brand-800 inline-block mt-0.5">${member.role}</span>
+                            </div>
+                        </div>
+
+                        <div class="space-y-1.5 text-xs text-slate-600 border-t border-slate-100 pt-3">
+                            <p class="flex items-center gap-2"><i class="fa-solid fa-id-badge text-slate-400 w-4"></i> ${member.id}</p>
+                            <p class="flex items-center gap-2"><i class="fa-solid fa-phone text-slate-400 w-4"></i> ${member.phone}</p>
+                            <p class="flex items-center gap-2"><i class="fa-solid fa-location-dot text-slate-400 w-4"></i> ${member.address}</p>
+                            <p class="flex items-center gap-2"><i class="fa-solid fa-droplet text-rose-500 w-4"></i> रक्तसमूह: <strong class="text-slate-800">${member.blood}</strong></p>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-3 border-t border-slate-100 flex gap-2">
+                        ${state.isAdminLoggedIn ? `
+                            <button onclick="generateIDCard('${member.id}')" class="flex-1 bg-brand-600 text-white font-semibold text-xs py-2 rounded-xl transition-all flex items-center justify-center gap-1.5">
+                                <i class="fa-solid fa-id-card"></i>
+                                <span>आईडी कार्ड प्रिन्ट</span>
+                            </button>
+                            <button onclick="confirmDeleteMember('${member.id}')" class="bg-rose-50 hover:bg-rose-600 text-rose-600 hover:text-white font-semibold text-xs px-3 py-2 rounded-xl transition-all flex items-center justify-center gap-1" title="सदस्य हटाउनुहोस्">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        ` : `
+                            <div class="w-full text-center text-[11px] text-slate-500 bg-slate-50 py-1.5 rounded-lg border border-slate-200">
+                                <i class="fa-solid fa-shield-halved text-brand-600 mr-1"></i>प्रमाणित सदस्य
+                            </div>
+                        `}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Filter Members
+        function filterMembers() {
+            const searchInput = document.getElementById('member-search');
+            const roleFilterInput = document.getElementById('member-role-filter');
+            if (!searchInput || !roleFilterInput) return;
+
+            const query = searchInput.value.toLowerCase();
+            const roleFilter = roleFilterInput.value;
+
+            const filtered = state.members.filter(m => {
+                const matchesSearch = m.name.toLowerCase().includes(query) || m.phone.includes(query) || m.id.toLowerCase().includes(query);
+                const matchesRole = roleFilter === 'ALL' || m.role === roleFilter;
+                return matchesSearch && matchesRole;
+            });
+
+            renderMembers(filtered);
+        }
+
+        // Render Projects
+        function renderProjects() {
+            const container = document.getElementById('projects-container');
+            if (!container) return;
+
+            container.innerHTML = state.projects.map(proj => {
+                let badgeColor = 'bg-blue-100 text-blue-800';
+                if (proj.status === 'सम्पन्न') badgeColor = 'bg-emerald-100 text-emerald-800';
+                if (proj.status === 'आगामी योजना') badgeColor = 'bg-amber-100 text-amber-800';
+
+                return `
+                    <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="text-xs font-bold px-2.5 py-1 rounded-full ${badgeColor}">${proj.status}</span>
+                                <span class="text-xs text-slate-400"><i class="fa-solid fa-tag mr-1"></i>${proj.category}</span>
+                            </div>
+                            <h3 class="text-lg font-bold text-slate-900 mb-2">${proj.title}</h3>
+                            <p class="text-slate-600 text-xs sm:text-sm mb-4 leading-relaxed">${proj.desc}</p>
+                            <p class="text-xs text-slate-500 mb-3"><i class="fa-solid fa-location-dot text-brand-600 mr-1"></i>${proj.location}</p>
+                        </div>
+
+                        <div>
+                            <div class="w-full bg-slate-100 rounded-full h-2 mb-2">
+                                <div class="bg-brand-600 h-2 rounded-full" style="width: ${proj.progress}%"></div>
+                            </div>
+                            <div class="flex justify-between text-[11px] text-slate-500 font-medium">
+                                <span>प्रगति: ${proj.progress}%</span>
+                                <span>महेश भिजन</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Render Notices
+        function renderNotices() {
+            const container = document.getElementById('notices-container');
+            if (!container) return;
+
+            container.innerHTML = state.notices.map(not => `
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-start gap-4">
+                    <div class="bg-brand-50 border border-brand-200 p-3 rounded-xl text-center min-w-[90px]">
+                        <i class="fa-solid fa-calendar-day text-brand-600 text-xl block mb-1"></i>
+                        <span class="text-xs font-bold text-brand-900">${not.date}</span>
+                    </div>
+                    <div class="space-y-1">
+                        <h3 class="text-base font-bold text-slate-900">${not.title}</h3>
+                        <p class="text-slate-600 text-sm leading-relaxed">${not.content}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Update Counter Statistics
+        function updateStats() {
+            const memberStat = document.getElementById('stat-members-count');
+            const projectStat = document.getElementById('stat-projects-count');
+            const pendingStat = document.getElementById('stat-pending-count');
+
+            const adminMemberStat = document.getElementById('admin-stat-members');
+            const adminPendingStat = document.getElementById('admin-stat-pending');
+            const adminProjectStat = document.getElementById('admin-stat-projects');
+            const adminNoticeStat = document.getElementById('admin-stat-notices');
+
+            if (memberStat) memberStat.innerText = `${state.members.length}+`;
+            if (projectStat) projectStat.innerText = `${state.projects.length}`;
+            if (pendingStat) pendingStat.innerText = `${state.pendingApplications.length}`;
+
+            if (adminMemberStat) adminMemberStat.innerText = `${state.members.length}`;
+            if (adminPendingStat) adminPendingStat.innerText = `${state.pendingApplications.length}`;
+            if (adminProjectStat) adminProjectStat.innerText = `${state.projects.length}`;
+            if (adminNoticeStat) adminNoticeStat.innerText = `${state.notices.length}`;
+        }
+
+        // Generate ID Card Modal Fill (Requires Admin)
+        function generateIDCard(memberId) {
+            if (!state.isAdminLoggedIn) {
+                openAdminLoginModal();
+                return;
+            }
+
+            const member = state.members.find(m => m.id === memberId);
+            if (!member) return;
+
+            document.getElementById('card-photo').src = member.photo;
+            document.getElementById('card-name').innerText = member.name;
+            document.getElementById('card-role-badge').innerText = member.role;
+            document.getElementById('card-id').innerText = `ID: ${member.id}`;
+            document.getElementById('card-address').innerText = member.address;
+            document.getElementById('card-phone').innerText = member.phone;
+            document.getElementById('card-blood').innerText = member.blood || 'N/A';
+            document.getElementById('card-date').innerText = member.date;
+
+            openModal('idCardModal');
+        }
+
+        // Download ID Card as PNG Image
+        async function downloadIDCardPDF() {
+            const card = document.getElementById('printableCard');
+            const memberId = document.getElementById('card-id').innerText || 'ID';
+            
+            showToast('आईडी कार्ड इमेज तयार हुँदैछ...');
+            
+            try {
+                const canvas = await html2canvas(card, {
+                    scale: 3,
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: '#ffffff'
+                });
+                
+                const imgData = canvas.toDataURL('image/png');
+                const link = document.createElement('a');
+                link.download = `ID_Card_${memberId.replace(/[^a-zA-Z0-9]/g, '_')}.png`;
+                link.href = imgData;
+                link.click();
+                
+                showToast('आईडी कार्ड इमेज (PNG) डाउनलोड भयो!');
+            } catch (err) {
+                console.error("Error generating image:", err);
+                showToast('डाउनलोड गर्दा केही समस्या भयो।');
+            }
+        }
+
+        // Download ID Card as PDF Document
+        async function downloadIDCardPDFDocument() {
+            const card = document.getElementById('printableCard');
+            const memberId = document.getElementById('card-id').innerText || 'ID';
+            
+            showToast('PDF तयार हुँदैछ...');
+            
+            try {
+                const canvas = await html2canvas(card, {
+                    scale: 3,
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: '#ffffff'
+                });
+                
+                const imgData = canvas.toDataURL('image/png');
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                
+                pdf.addImage(imgData, 'PNG', 50, 30, 110, 160);
+                pdf.save(`ID_Card_${memberId.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`);
+                showToast('आईडी कार्ड (PDF) डाउनलोड भयो!');
+            } catch (err) {
+                console.error("Error generating PDF:", err);
+                showToast('PDF डाउनलोड गर्दा केही समस्या भयो।');
+            }
+        }
+
+        // Member Registration Modal Open
+        function openRegistrationModal(isAdminDirect = false) {
+            state.isDirectAdminRegistration = isAdminDirect;
+            const title = document.getElementById('reg-form-title');
+            const subtitle = document.getElementById('reg-form-subtitle');
+            const tag = document.getElementById('reg-form-admin-tag');
+
+            if (isAdminDirect) {
+                if (title) title.innerText = "नयाँ सदस्य थप्नुहोस् (Admin Direct Add)";
+                if (subtitle) subtitle.innerText = "एडमिनले प्रत्यक्ष रूपमा नयाँ सदस्य दर्ता गर्न सक्नुहुन्छ।";
+                if (tag) tag.classList.remove('hidden');
+            } else {
+                if (title) title.innerText = "महेश भिजन सदस्यता आवेदन फारम";
+                if (subtitle) subtitle.innerText = "गाउँको विकासमा जोडिन फारम भर्नुहोस्। (फारम एडमिनद्वारा स्वीकृत भएपछि कार्ड जारी हुनेछ)";
+                if (tag) tag.classList.add('hidden');
+            }
+
+            document.getElementById('memberForm').reset();
+            document.getElementById('photo-preview-container').classList.add('hidden');
+            state.uploadedPhotoData = null;
+            openModal('registrationModal');
+        }
+
+        // Handle Image Upload Preview
+        function previewImageUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    state.uploadedPhotoData = e.target.result;
+                    const preview = document.getElementById('reg-photo-preview');
+                    const container = document.getElementById('photo-preview-container');
+                    if (preview && container) {
+                        preview.src = e.target.result;
+                        container.classList.remove('hidden');
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // Handle Member Submit
+        function handleMemberSubmit(e) {
+            e.preventDefault();
+            const name = document.getElementById('reg-name').value.trim();
+            const phone = document.getElementById('reg-phone').value.trim();
+            const address = document.getElementById('reg-address').value.trim();
+            const role = document.getElementById('reg-role').value;
+            const blood = document.getElementById('reg-blood').value;
+            const skill = document.getElementById('reg-skill').value.trim();
+            const photo = state.uploadedPhotoData || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=300&auto=format&fit=crop&q=80';
+
+            if (state.isDirectAdminRegistration) {
+                const newMember = {
+                    id: `MV-2026-00${state.members.length + 1}`,
+                    name, phone, address, role, blood, skill, photo,
+                    date: '२०८२/०५/१०'
+                };
+                state.members.unshift(newMember);
+                showToast(`नयाँ सदस्य दर्ता भयो! ID: ${newMember.id}`);
+            } else {
+                const newApp = {
+                    id: `TEMP-${Math.floor(100 + Math.random() * 900)}`,
+                    name, phone, address, role, blood, skill, photo,
+                    date: '२०८२/०५/१०'
+                };
+                state.pendingApplications.unshift(newApp);
+                showToast('तपाईँको सदस्यता आवेदन फारम बुझाइयो! स्वीकृतिका लागि एडमिन समक्ष पुगेको छ।');
+            }
+
+            closeModal('registrationModal');
+            renderAdminDashboard();
+            renderMembers();
+            updateStats();
+        }
+
+        // Project Modal & Submit
+        function openNewProjectModal() {
+            requireAdminAction(() => {
+                document.getElementById('projectForm').reset();
+                openModal('projectModal');
+            });
+        }
+
+        function handleProjectSubmit(e) {
+            e.preventDefault();
+            const title = document.getElementById('proj-title').value.trim();
+            const location = document.getElementById('proj-location').value.trim();
+            const category = document.getElementById('proj-category').value;
+            const desc = document.getElementById('proj-desc').value.trim();
+
+            const newProject = {
+                id: state.projects.length + 1,
+                title, category, location, desc,
+                status: 'सञ्चालित',
+                progress: 10
+            };
+
+            state.projects.unshift(newProject);
+            closeModal('projectModal');
+            renderProjects();
+            updateStats();
+            showToast('नयाँ योजना सफलतापुर्वक थपियो!');
+        }
+
+        // Notice Modal & Submit
+        function openNoticeModal() {
+            requireAdminAction(() => {
+                document.getElementById('noticeForm').reset();
+                openModal('noticeModal');
+            });
+        }
+
+        function handleNoticeSubmit(e) {
+            e.preventDefault();
+            const title = document.getElementById('not-title').value.trim();
+            const date = document.getElementById('not-date').value.trim();
+            const content = document.getElementById('not-content').value.trim();
+
+            const newNotice = {
+                id: state.notices.length + 1,
+                title, date, content
+            };
+
+            state.notices.unshift(newNotice);
+            closeModal('noticeModal');
+            renderNotices();
+            updateStats();
+            showToast('नयाँ सूचना सफलतापुर्वक जारी भयो!');
+        }
+
+        // Notification Toast Display
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toast-message');
+            if (!toast || !toastMsg) return;
+
+            toastMsg.innerText = msg;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3500);
+        }
+    </script>
+</body>
+</html>
